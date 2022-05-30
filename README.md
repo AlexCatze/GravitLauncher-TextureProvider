@@ -35,6 +35,14 @@ curl -O https://raw.githubusercontent.com/microwin7/GravitLauncher-TextureProvid
 
 <h1 align="center">
 <br>
+Пожертвования разработчику
+</h1>
+
+- [QIWI MICROWIN7](https://qiwi.com/n/microwin7)
+- [ЮMoney 4100117702839788](https://yoomoney.ru/to/4100117702839788)
+
+<h1 align="center">
+<br>
 НАСТРОЙКА
 </h1>
 
