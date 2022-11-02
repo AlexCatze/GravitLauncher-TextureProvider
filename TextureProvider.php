@@ -46,7 +46,7 @@ class Check
         if (isset($data)) {
             $msg = array(
                 'url' => Constants::getSkinURL($login),
-                'digest' => base64_encode(md5($data))
+                'digest' => base64_encode(md5($data, true))
             );
             if (self::slim($data)) $msg['metadata'] = array('model' => 'slim');
         }
@@ -70,7 +70,7 @@ class Check
         if (isset($data)) {
             $msg = array(
                 'url' => Constants::getCapeURL($login),
-                'digest' => base64_encode(md5($data))
+                'digest' => base64_encode(md5($data, true))
             );
         }
         return $msg;
