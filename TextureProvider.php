@@ -18,39 +18,56 @@ class Constants
     const SKIN_DEFAULT = "iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAMAAACVQ462AAAAWlBMVEVHcEwsHg51Ri9qQC+HVTgjIyNOLyK7inGrfWaWb1udZkj///9SPYmAUjaWX0FWScwoKCgAzMwAXl4AqKgAaGgwKHImIVtGOqU6MYkAf38AmpoAr68/Pz9ra2t3xPtNAAAAAXRSTlMAQObYZgAAAZJJREFUeNrUzLUBwDAUA9EPMsmw/7jhNljl9Xdy0J3t5CndmcOBT4Mw8/8P4pfB6sNg9yA892wQvwzSIr8f5JRzSeS7AaiptpxazUq8GPQB5uSe2DH644GTsDFsNrqB9CcDgOCAmffegWWwAExnBrljqowsFBuGYShY5oakgOXs/39zF6voDG9r+wLvTCVUcL+uV4m6uXG/L3Ut691697tgnZgJavinQHOB7DD8awmaLWEmaNuu7YGf6XcIITRm19P1ahbARCRGEc8x/UZ4CroXAQTVIGL0YySrREBADFGicS8XtG8CTS+IGU2F6EgSE34VNKoNz8348mzoXGDxpxkQBpg2bWobjgZSm+uiKDYH2BAO8C4YBmbgAjpq5jUl4yGJC46HQ7HJBfkeTAImIEmgmtpINi44JsHx+CKA/BTuArISXeBTR4AI5gK4C2JqRfPs0HNBkQnG8S4Yxw8IGoIZfXEBOW1D4YJDAdNSXgRevP+ylK6fGBCwsWywmA19EtBkJr8K2t4N5pnAVwH0jptsBp+2gUFj4tL5ywAAAABJRU5ErkJggg==";
     const CAPE_DEFAULT = "iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgAQMAAACYU+zHAAAAA1BMVEVHcEyC+tLSAAAAAXRSTlMAQObYZgAAAAxJREFUeAFjGAV4AQABIAABL3HDQQAAAABJRU5ErkJggg==";
 
-    public static function getSkinURL($login)
+    public static function getSkinURL()
     {
-        return str_replace('%login%', $login, self::SKIN_URL) . (contains(self::SKIN_URL, $_SERVER['PHP_SELF'] . '?login=%login%') ? '&type=skin' : '');
+        return self::SKIN_URL;
     }
-    public static function getCapeURL($login)
+    public static function getCapeURL()
     {
-        return str_replace('%login%', $login, self::CAPE_URL) . (contains(self::CAPE_URL, $_SERVER['PHP_SELF'] . '?login=%login%') ? '&type=cape' : '');
+        return self::CAPE_URL;
     }
-    public static function getSkin($login)
+    public static function getSkinPath()
     {
-        $path = Check::ci_find_file(self::SKIN_PATH . $login . '.png');
-        return $path ? file_get_contents($path) : (self::GIVE_DEFAULT && contains(self::SKIN_URL, $_SERVER['PHP_SELF']) ? base64_decode(self::SKIN_DEFAULT) : null);
+        return self::SKIN_PATH;
     }
-    public static function getCape($login)
+    public static function getCapePath()
     {
-        $path = Check::ci_find_file(self::CAPE_PATH . $login . '.png');
-        return $path ? file_get_contents($path) : (self::GIVE_DEFAULT && contains(self::CAPE_URL, $_SERVER['PHP_SELF']) ? base64_decode(self::CAPE_DEFAULT) : null);
+        return self::CAPE_PATH;
+    }
+    public static function getSkinDefault()
+    {
+        return self::SKIN_DEFAULT;
+    }
+    public static function getCapeDefault()
+    {
+        return self::CAPE_DEFAULT;
+    }
+    public static function getURL($function, $login)
+    {
+        $url = self::{'get' . ucwords($function) . 'URL'}();
+        return str_replace('%login%', $login, $url) . (contains($url, $_SERVER['PHP_SELF'] . '?login=%login%')
+            ? '&type=' . $function
+            : '');
+    }
+    public static function getData($function, $login)
+    {
+        $path = Check::ci_find_file(self::{'get' . ucwords($function) . 'Path'}() . $login . '.png');
+        return $path
+            ? file_get_contents($path)
+            : (self::GIVE_DEFAULT && contains(self::{'get' . ucwords($function) . 'URL'}(), $_SERVER['PHP_SELF'])
+                ? base64_decode(self::{'get' . ucwords($function) . 'Default'}())
+                : null);
     }
 }
 class Check
 {
     public static function skin($login)
     {
-        $msg = [];
-        $data = Constants::getSkin($login);
-        if (isset($data)) {
-            $msg = array(
-                'url' => Constants::getSkinURL($login),
-                'digest' => base64_encode(md5($data))
-            );
-            if (self::slim($data)) $msg['metadata'] = array('model' => 'slim');
-        }
-        return $msg;
+        return self::getData(__FUNCTION__, $login);
+    }
+    public static function cape($login)
+    {
+        return self::getData(__FUNCTION__, $login);
     }
     private static function slim($data)
     {
@@ -63,17 +80,24 @@ class Check
             return true;
         else return false;
     }
-    public static function cape($login)
+    private static function getData($function, $login)
     {
         $msg = [];
-        $data = Constants::getCape($login);
+        $data = Constants::getData($function, $login);
         if (isset($data)) {
-            $msg = array(
-                'url' => Constants::getCapeURL($login),
-                'digest' => base64_encode(md5($data))
-            );
+            $msg = [
+                'url' => Constants::getURL($function, $login),
+                'digest' => self::digest($data)
+            ];
         }
+        if ($function == 'skin')
+            if (self::slim($data))
+                $msg['metadata'] = ['model' => 'slim'];
         return $msg;
+    }
+    private static function digest($string)
+    {
+        return strtr(base64_encode(md5($string, true)), '+/', '-_');
     }
     public static function ci_find_file($filename)
     {
@@ -107,10 +131,11 @@ function getTexture($login, $type)
 {
     header("Content-type: image/png");
     switch ($type) {
+        case 'skin':
         case 'cape':
-            die(Constants::getCape($login));
+            die(Constants::getData($type, $login));
         default:
-            die(Constants::getSkin($login));
+            die(Constants::getData('skin', $login));
     }
 }
 function response($msg = null)
