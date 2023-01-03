@@ -116,6 +116,7 @@ class Check
 }
 function start()
 {
+    if (extension_loaded('gd')) die(header("HTTP/1.0 403 Please enable or install the GD extension in your php.ini"));
     $login = isset($_GET['login']) ? $_GET['login'] : null;
     $type = isset($_GET['type']) ? $_GET['type'] : null;
     regex_valid($login) ?: response();
